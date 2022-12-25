@@ -1,4 +1,4 @@
-package org.daehagnawa.batch.daehagnawabatch.service;
+package org.daehagnawa.batch.daehagnawabatch.chunk;
 
 import lombok.extern.slf4j.Slf4j;
 import org.daehagnawa.batch.daehagnawabatch.category.Category;
@@ -6,27 +6,26 @@ import org.daehagnawa.batch.daehagnawabatch.category.CategoryFactory;
 import org.daehagnawa.batch.daehagnawabatch.category.type.CompetitionRatio;
 import org.daehagnawa.batch.daehagnawabatch.category.type.RecruitmentCount;
 import org.daehagnawa.batch.daehagnawabatch.category.type.SubDepartment;
-import org.daehagnawa.batch.daehagnawabatch.domain.department.Department;
-import org.daehagnawa.batch.daehagnawabatch.domain.department.DepartmentProxy;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfo;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfoProxy;
 import org.daehagnawa.batch.daehagnawabatch.excel.ExcelData;
 import org.daehagnawa.batch.daehagnawabatch.support.CategoryReg;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.stereotype.Component;
+import org.springframework.batch.item.ItemProcessor;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 @Slf4j
-@Component
-public class UwayCrawlingService {
-    private static List<Department> docs;
+public class UwayCrawlingProcessor implements ItemProcessor<ExcelData, List<DepartmentInfo>> {
 
-    private static DepartmentProxy departmentProxy;
+    private static List<DepartmentInfo> docs;
+
+    private static DepartmentInfoProxy departmentProxy;
 
     private static List<Category> categoryInfos = new LinkedList<>();
 
@@ -36,16 +35,17 @@ public class UwayCrawlingService {
 
     private static int recuitSaveCnt = 0, ratioSaveCnt = 0;
 
-    public List<Department> startCrawling(ExcelData excelData) throws IOException {
+    @Override
+    public List<DepartmentInfo> process(ExcelData item) throws Exception {
         log.info("크롤링을 시작합니다.");
 
         // init
         docs = new ArrayList<>();
-        departmentProxy = excelData.toDepartmentProxy();
+        departmentProxy = item.toDepartmentProxy();
 
-        log.info("{}", excelData.getUniversityName());
+        log.info("{}", item.getUniversityName());
 
-        Document document = excelData.getDocument();
+        Document document = item.getDocument();
 
         // 경쟁률을 보여주는 테이블(div.DivType)을 Element로 복수개인 Elements를 만들어서 가져온다.
         Elements tables = document.select("form div.DivType");
@@ -68,11 +68,11 @@ public class UwayCrawlingService {
             String admissionType = table.select("div h3").text().replace("경쟁률 현황", "");
 
             if (!checkCategoryValid(tableCategory)) {
-                log.info("{}", admissionType + " 수집 X");
+//                log.info("{}", admissionType + " 수집 X");
                 continue;
             }
 
-            log.info("{}", admissionType + " 수집 O");
+//            log.info("{}", admissionType + " 수집 O");
 
             // 테이블의 row를 나누고 rows 로 만들어 가져옴
             Elements rows = table.getElementsByClass("trFieldValue");
@@ -113,7 +113,7 @@ public class UwayCrawlingService {
 
             // 사이즈가 크면 dept 뒤에 subDept 이어 붙이기
             if ((subDeptCnt = dynamicCategoryCnt - staticCategoryCnt) > 0) {
-                log.info("===========================모집단위 나눠짐===========================");
+//                log.info("===========================모집단위 나눠짐===========================");
                 int deptSeq = deptCategory.getCategorySeq();
                 for (int i = 1; i <= subDeptCnt; i++) {
                     int subDeptSeq = deptSeq + i;
@@ -126,7 +126,7 @@ public class UwayCrawlingService {
             boolean toLinked = (recuitSaveCnt != 0) || (ratioSaveCnt != 0);
 
             for (Category info : categoryInfos) {
-                log.info("-------------------------");
+//                log.info("-------------------------");
 
                 // rowCount 확인
                 // rowCount가 0이면 column 값을 가져와서 CategoryInfo 객체에 셋팅
@@ -140,7 +140,7 @@ public class UwayCrawlingService {
 
                 if (info.isTarget()) {
                     info.setDepartmentProxyData(departmentProxy, toLinked);
-                    log.info("{} : {} ", info.getCategoryName(), info.getColumnData());
+//                    log.info("{} : {} ", info.getCategoryName(), info.getColumnData());
                 }
 
                 // instanceof 보다 메서드 호출이 더 빠르다는데...
@@ -204,14 +204,11 @@ public class UwayCrawlingService {
         // 우리가 수집을 목표로 하는 2가지 타입의 카테고리
         List<String> categoryList = tableCategory.eachText();
         if (
-                (
-                        categoryList.stream().anyMatch(s -> s.matches(CategoryReg.DEPARTMENT_REG1.getReg())) ||
-                        categoryList.stream().anyMatch(s -> s.matches(CategoryReg.DEPARTMENT_REG2.getReg()))
-                ) &&
-                        categoryList.stream().anyMatch(s -> s.matches(CategoryReg.RECURITMENT_COUNT_REG.getReg())) &&
-                        (
-                        categoryList.stream().anyMatch(s -> s.matches(CategoryReg.APPLICANTS_COUNT_REG1.getReg())) ||
-                        categoryList.stream().anyMatch(s -> s.matches(CategoryReg.APPLICANTS_COUNT_REG2.getReg()))
+                (categoryList.stream().anyMatch(s -> s.matches(CategoryReg.DEPARTMENT_REG1.getReg())) ||
+                                categoryList.stream().anyMatch(s -> s.matches(CategoryReg.DEPARTMENT_REG2.getReg()))
+                ) && categoryList.stream().anyMatch(s -> s.matches(CategoryReg.RECURITMENT_COUNT_REG.getReg())) &&
+                        (categoryList.stream().anyMatch(s -> s.matches(CategoryReg.APPLICANTS_COUNT_REG1.getReg())) ||
+                                        categoryList.stream().anyMatch(s -> s.matches(CategoryReg.APPLICANTS_COUNT_REG2.getReg()))
                         )
         ) {
             for (int i = 0; i < categoryList.size(); i++) {
@@ -224,7 +221,7 @@ public class UwayCrawlingService {
                 // 따로 빼서 바로 접근 할 수 있도록 하자.
                 if (
                         category.matches(CategoryReg.DEPARTMENT_REG1.getReg()) ||
-                        category.matches(CategoryReg.DEPARTMENT_REG2.getReg())
+                                category.matches(CategoryReg.DEPARTMENT_REG2.getReg())
                 )
                     deptCategory = categoryInfos.get(i);
             }
@@ -234,8 +231,8 @@ public class UwayCrawlingService {
             // 회원들 한테 보여줄 때 경쟁률 -1 이면 - 로 보여줌
             if (
                     categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG1.getReg())) &&
-                    categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG2.getReg())) &&
-                    categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG3.getReg()))
+                            categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG2.getReg())) &&
+                            categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG3.getReg()))
             ) {
                 log.info("경쟁률 생성!!");
                 Category ratio = CategoryFactory.createRatio(Integer.MAX_VALUE);

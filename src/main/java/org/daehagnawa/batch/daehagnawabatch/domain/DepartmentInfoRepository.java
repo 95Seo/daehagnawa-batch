@@ -1,4 +1,4 @@
-package org.daehagnawa.batch.daehagnawabatch.domain.department;
+package org.daehagnawa.batch.daehagnawabatch.domain;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,12 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-public interface DepartmentRepository extends JpaRepository<Department, Long> {
+public interface DepartmentInfoRepository extends JpaRepository<DepartmentInfo, Long> {
 
     @Query("SELECT DISTINCT d " +
             "FROM university_department_info d " +
             "WHERE (d.universityName LIKE %:keyword% OR d.departmentName LIKE %:keyword%) ")
-    List<Department> findAllDepartmentByKeyword(@Param("keyword") String keyword, Pageable pageable);
+    List<DepartmentInfo> findAllDepartmentByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
     // 임시로
     @Modifying

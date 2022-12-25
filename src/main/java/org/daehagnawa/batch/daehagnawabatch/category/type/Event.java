@@ -2,7 +2,7 @@ package org.daehagnawa.batch.daehagnawabatch.category.type;
 
 
 import org.daehagnawa.batch.daehagnawabatch.category.Category;
-import org.daehagnawa.batch.daehagnawabatch.domain.department.DepartmentProxy;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfoProxy;
 
 public class Event extends Category {
 
@@ -14,7 +14,7 @@ public class Event extends Category {
     }
 
     @Override
-    public void setDepartmentProxyData(DepartmentProxy template, boolean toLinked) {
+    public void setDepartmentProxyData(DepartmentInfoProxy template, boolean toLinked) {
         if (!columnData.equals("-"))
             template.setEvent(columnData);
     }

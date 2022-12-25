@@ -2,7 +2,7 @@ package org.daehagnawa.batch.daehagnawabatch.category.type;
 
 import lombok.extern.slf4j.Slf4j;
 import org.daehagnawa.batch.daehagnawabatch.category.Category;
-import org.daehagnawa.batch.daehagnawabatch.domain.department.DepartmentProxy;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfoProxy;
 
 @Slf4j
 public class ExceptCategory extends Category {
@@ -12,7 +12,7 @@ public class ExceptCategory extends Category {
     }
 
     @Override
-    public void setDepartmentProxyData(DepartmentProxy template, boolean toLinked) {
+    public void setDepartmentProxyData(DepartmentInfoProxy template, boolean toLinked) {
         // 흠...
         log.info("쓰레기 값");
     }

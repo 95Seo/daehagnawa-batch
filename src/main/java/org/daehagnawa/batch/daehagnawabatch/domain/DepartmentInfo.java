@@ -1,6 +1,7 @@
-package org.daehagnawa.batch.daehagnawabatch.domain.department;
+package org.daehagnawa.batch.daehagnawabatch.domain;
 
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Comment;
@@ -11,12 +12,11 @@ import org.springframework.data.annotation.LastModifiedDate;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @Builder
 @DynamicInsert
 @Entity(name = "university_department_info")
-public class Department {
+public class DepartmentInfo {
 
     @Id
     @Comment("기본키")
@@ -64,9 +64,9 @@ public class Department {
     @Column(name = "updated_at", columnDefinition = "DATETIME")
     private LocalDateTime updatedAt;
 
-    protected Department() {}
+    protected DepartmentInfo() {}
 
-    public Department(
+    public DepartmentInfo(
             Long id,
             String universityName,
             String admissionType,

@@ -1,7 +1,7 @@
 package org.daehagnawa.batch.daehagnawabatch.category;
 
 import lombok.Getter;
-import org.daehagnawa.batch.daehagnawabatch.domain.department.DepartmentProxy;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfoProxy;
 import org.jsoup.nodes.Element;
 
 @Getter
@@ -36,7 +36,7 @@ public abstract class Category {
         rowCount--;
     }
 
-    public abstract void setDepartmentProxyData(DepartmentProxy template, boolean toLinked);
+    public abstract void setDepartmentProxyData(DepartmentInfoProxy template, boolean toLinked);
 
     public abstract boolean isTarget();
 

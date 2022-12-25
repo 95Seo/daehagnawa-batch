@@ -1,9 +1,9 @@
-package org.daehagnawa.batch.daehagnawabatch.domain.department;
+package org.daehagnawa.batch.daehagnawabatch.domain;
 
 import lombok.Setter;
 
 @Setter
-public class DepartmentProxy {
+public class DepartmentInfoProxy {
 
     // 대학이름
     private String universityName;
@@ -23,9 +23,9 @@ public class DepartmentProxy {
     // 경쟁률
     private float competitionRatio;
 
-    private DepartmentProxy() {}
+    private DepartmentInfoProxy() {}
 
-    public DepartmentProxy(
+    public DepartmentInfoProxy(
             String universityName
     ) {
         this.universityName = universityName;
@@ -55,8 +55,8 @@ public class DepartmentProxy {
         departmentName += " " + genter;
     }
 
-    public Department toEntity() {
-        return Department.builder()
+    public DepartmentInfo toEntity() {
+        return DepartmentInfo.builder()
                 .universityName(universityName)
                 .admissionType(admissionType)
                 .departmentName(departmentName)

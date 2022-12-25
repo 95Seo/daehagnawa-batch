@@ -2,7 +2,7 @@ package org.daehagnawa.batch.daehagnawabatch.category.type;
 
 
 import org.daehagnawa.batch.daehagnawabatch.category.Category;
-import org.daehagnawa.batch.daehagnawabatch.domain.department.DepartmentProxy;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfoProxy;
 
 public class CompetitionRatio extends Category {
 
@@ -13,7 +13,7 @@ public class CompetitionRatio extends Category {
     // 좀 애매하네..
     // slideRatio를 columnData에 적용 시킨 상태로 필드로 가지고 싶다..
     @Override
-    public void setDepartmentProxyData(DepartmentProxy template, boolean toLinked) {
+    public void setDepartmentProxyData(DepartmentInfoProxy template, boolean toLinked) {
         template.setCompetitionRatio(toFloat(slideRatio(validationNoneData(columnData))));
     }
 

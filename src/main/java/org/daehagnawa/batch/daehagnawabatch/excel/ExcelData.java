@@ -1,16 +1,17 @@
 package org.daehagnawa.batch.daehagnawabatch.excel;
 
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.daehagnawa.batch.daehagnawabatch.domain.department.DepartmentProxy;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfoProxy;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 
-@Getter
-@Setter
+@Data
+@Builder
 public class ExcelData {
 
     private String universityName;
@@ -21,9 +22,8 @@ public class ExcelData {
 
     private String universityURL;
 
-    private ExcelData(){}
+    public ExcelData(){}
 
-    @Builder
     public ExcelData(
             String universityName,
             String universityURL,
@@ -36,8 +36,8 @@ public class ExcelData {
         this.area = area;
     }
 
-    public DepartmentProxy toDepartmentProxy() {
-        return new DepartmentProxy(universityName);
+    public DepartmentInfoProxy toDepartmentProxy() {
+        return new DepartmentInfoProxy(universityName);
     }
 
     public Document getDocument() throws IOException {
