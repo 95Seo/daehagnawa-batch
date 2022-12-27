@@ -60,7 +60,7 @@ public class CrawlingJobConfiguration {
                 .fieldSetMapper(new BeanWrapperFieldSetMapper<>())
                 .targetType(ExcelData.class)
                 .delimited().delimiter(",")
-                .names("universityName", "universityURL")
+                .names("universityName", "universityURL", "degree", "area")
                 .build();
     }
 

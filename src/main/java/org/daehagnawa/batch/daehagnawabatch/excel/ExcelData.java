@@ -37,7 +37,11 @@ public class ExcelData {
     }
 
     public DepartmentInfoProxy toDepartmentProxy() {
-        return new DepartmentInfoProxy(universityName);
+        return new DepartmentInfoProxy(
+                universityName,
+                area,
+                degree
+        );
     }
 
     public Document getDocument() throws IOException {

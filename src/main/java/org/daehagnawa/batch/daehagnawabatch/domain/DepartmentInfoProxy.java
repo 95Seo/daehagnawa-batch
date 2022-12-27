@@ -20,15 +20,28 @@ public class DepartmentInfoProxy {
     // 지원인원
     private String applicantsCount;
 
+    // 지역
+    private String area;
+
+    // 학위
+    private String degree;
+
+    // 입시 년도
+    private int entranceExamYear;
+
     // 경쟁률
     private float competitionRatio;
 
     private DepartmentInfoProxy() {}
 
     public DepartmentInfoProxy(
-            String universityName
+            String universityName,
+            String area,
+            String degree
     ) {
         this.universityName = universityName;
+        this.area = area;
+        this.degree = degree;
     }
 
     public void setSubDept(String subDept) {
@@ -63,6 +76,9 @@ public class DepartmentInfoProxy {
                 .recruitmentCount(recruitmentCount)
                 .applicantsCount(applicantsCount)
                 .competitionRatio(competitionRatio)
+                .area(area)
+                .degree(degree)
+                .entranceExamYear(entranceExamYear)
                 .build();
     }
 }

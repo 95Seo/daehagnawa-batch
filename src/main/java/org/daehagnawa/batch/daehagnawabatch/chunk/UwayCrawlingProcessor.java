@@ -42,6 +42,7 @@ public class UwayCrawlingProcessor implements ItemProcessor<ExcelData, List<Depa
         // init
         docs = new ArrayList<>();
         departmentProxy = item.toDepartmentProxy();
+        departmentProxy.setEntranceExamYear(2023);
 
         log.info("{}", item.getUniversityName());
 
