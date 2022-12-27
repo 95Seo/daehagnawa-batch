@@ -8,6 +8,7 @@ import org.daehagnawa.batch.daehagnawabatch.category.type.RecruitmentCount;
 import org.daehagnawa.batch.daehagnawabatch.category.type.SubDepartment;
 import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfo;
 import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfoProxy;
+import org.daehagnawa.batch.daehagnawabatch.domain.UniversityDocument;
 import org.daehagnawa.batch.daehagnawabatch.excel.ExcelData;
 import org.daehagnawa.batch.daehagnawabatch.support.CategoryReg;
 import org.jsoup.nodes.Document;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Queue;
 
 @Slf4j
-public class UwayCrawlingProcessor implements ItemProcessor<ExcelData, List<DepartmentInfo>> {
+public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, List<DepartmentInfo>> {
 
     private static List<DepartmentInfo> docs;
 
@@ -36,7 +37,7 @@ public class UwayCrawlingProcessor implements ItemProcessor<ExcelData, List<Depa
     private static int recuitSaveCnt = 0, ratioSaveCnt = 0;
 
     @Override
-    public List<DepartmentInfo> process(ExcelData item) throws Exception {
+    public List<DepartmentInfo> process(UniversityDocument item) throws Exception {
         log.info("크롤링을 시작합니다.");
 
         // init

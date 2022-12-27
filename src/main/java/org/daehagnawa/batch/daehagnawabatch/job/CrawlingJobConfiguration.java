@@ -4,26 +4,32 @@ import lombok.RequiredArgsConstructor;
 import org.daehagnawa.batch.daehagnawabatch.chunk.JpaItemListWriter;
 import org.daehagnawa.batch.daehagnawabatch.chunk.UwayCrawlingProcessor;
 import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfo;
-import org.daehagnawa.batch.daehagnawabatch.excel.ExcelData;
+import org.daehagnawa.batch.daehagnawabatch.domain.UniversityDocument;
 import org.daehagnawa.batch.daehagnawabatch.listener.StopWatchJobListener;
+import org.daehagnawa.batch.daehagnawabatch.partition.CrawlingPartitioner;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaItemWriter;
-import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.persistence.EntityManagerFactory;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
@@ -32,44 +38,112 @@ public class CrawlingJobConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final EntityManagerFactory entityManagerFactory;
+    private final Partitioner CrawlingPartitioner;
+
+    private int chunkSize = 1;
 
     @Bean
     public Job job() {
         return jobBuilderFactory.get("crawlingJob")
-                .start(crawlingStep())
+                .start(crawlingMasterStep())
                 .incrementer(new RunIdIncrementer())
                 .listener(new StopWatchJobListener())
                 .build();
     }
 
     @Bean
-    public Step crawlingStep() {
-        return stepBuilderFactory.get("crawlingStep")
-                .<ExcelData, List<DepartmentInfo>>chunk(1)
-                .reader(itemReader())
+    @JobScope
+    public Step crawlingMasterStep() {
+        return stepBuilderFactory.get("crawlingMasterStep")
+                .partitioner(crawlingSlaveStep().getName(), CrawlingPartitioner)
+                .step(crawlingSlaveStep())
+                .gridSize(5)
+                .taskExecutor(taskExecutor())
+                .build();
+    }
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(5);
+        taskExecutor.setMaxPoolSize(20);
+        taskExecutor.setThreadNamePrefix("uway-crawling-thread-");
+
+        return taskExecutor;
+    }
+
+//    @Bean
+//    public Partitioner partitioner() {
+//        return new CrawlingPartitioner();
+//    }
+
+//    @Bean
+//    public Step crawlingSlaveStep() {
+//        return stepBuilderFactory.get("crawlingSlaveStep")
+//                .<UniversityDocument, List<DepartmentInfo>>chunk(chunkSize)
+//                .reader(itemReader(null, null))
+//                .processor(itemProcessor())
+//                .writer(itemWriter())
+//                .build();
+//    }
+
+    @Bean
+    public Step crawlingSlaveStep() {
+        return stepBuilderFactory.get("crawlingSlaveStep")
+                .<UniversityDocument, List<DepartmentInfo>>chunk(chunkSize)
+                .reader(itemReader(null, null))
                 .processor(itemProcessor())
-                .writer(itemWriter())
+                .writer(new ItemWriter<List<DepartmentInfo>>() {
+                    @Override
+                    public void write(List<? extends List<DepartmentInfo>> items) throws Exception {
+                        items.forEach(item -> System.out.println(item));
+                    }
+                })
+                .build();
+    }
+
+//    @Bean
+//    @StepScope
+//    public FlatFileItemReader<ExcelData> itemReader() {
+//        return new FlatFileItemReaderBuilder<ExcelData>()
+//                .name("readExcelData")
+//                .resource(new ClassPathResource("UwayType.csv"))
+//                .fieldSetMapper(new BeanWrapperFieldSetMapper<>())
+//                .targetType(ExcelData.class)
+//                .delimited().delimiter(",")
+//                .names("universityName", "universityURL", "degree", "area")
+//                .build();
+//    }
+
+    @Bean
+    @StepScope
+    public JpaPagingItemReader<UniversityDocument> itemReader(
+            @Value("#{stepExecutionContext['start']}") Long start,
+            @Value("#{stepExecutionContext['end']}") Long end
+    ) {
+        Map<String, Object> parameter = new HashMap<>();
+        parameter.put("start", start);
+        parameter.put("end", end);
+
+        return new JpaPagingItemReaderBuilder<UniversityDocument>()
+                .name("CrawlingItemReader")
+                .entityManagerFactory(entityManagerFactory)
+                .pageSize(chunkSize)
+                .queryString("select u " +
+                        "from university_document u " +
+                        "where university_id >= :start and university_id <= :end ")
+                .parameterValues(parameter)
                 .build();
     }
 
     @Bean
-    public FlatFileItemReader<ExcelData> itemReader() {
-        return new FlatFileItemReaderBuilder<ExcelData>()
-                .name("readExcelData")
-                .resource(new ClassPathResource("UwayType.csv"))
-                .fieldSetMapper(new BeanWrapperFieldSetMapper<>())
-                .targetType(ExcelData.class)
-                .delimited().delimiter(",")
-                .names("universityName", "universityURL", "degree", "area")
-                .build();
-    }
-
-    @Bean
-    public ItemProcessor<ExcelData, List<DepartmentInfo>> itemProcessor() {
+    @StepScope
+    public ItemProcessor<UniversityDocument, List<DepartmentInfo>> itemProcessor() {
         return new UwayCrawlingProcessor();
     }
 
     @Bean
+    @StepScope
     public JpaItemListWriter<DepartmentInfo> itemWriter() {
 
         JpaItemWriter<DepartmentInfo> jpaItemWriter = new JpaItemWriter<>();
