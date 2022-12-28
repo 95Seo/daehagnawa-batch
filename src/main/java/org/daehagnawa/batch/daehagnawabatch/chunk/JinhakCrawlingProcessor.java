@@ -17,12 +17,15 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 @Slf4j
 @StepScope
 @Component
-public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, List<DepartmentInfo>> {
+public class JinhakCrawlingProcessor implements ItemProcessor<UniversityDocument, List<DepartmentInfo>> {
 
     private List<DepartmentInfo> docs;
 

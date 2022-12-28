@@ -35,31 +35,16 @@ import java.util.Map;
 public class CrawlingJobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
-    private final EntityManagerFactory entityManagerFactory;
-    private final EntityManager em;
-    private final Partitioner CrawlingPartitioner;
-    private final UwayCrawlingProcessor uwayCrawlingProcessor;
-
-    private int chunkSize = 1;
+    private final Step uwayCrawlingMasterStep;
+    private final Step jinhakCrawlingMasterStep;
 
     @Bean
     public Job job() {
         return jobBuilderFactory.get("crawlingJob")
-                .start(crawlingMasterStep())
+                .start(uwayCrawlingMasterStep)
+                .next(jinhakCrawlingMasterStep)
                 .incrementer(new RunIdIncrementer())
                 .listener(new StopWatchJobListener())
-                .build();
-    }
-
-    @Bean
-    @JobScope
-    public Step crawlingMasterStep() {
-        return stepBuilderFactory.get("crawlingMasterStep")
-                .partitioner(crawlingSlaveStep().getName(), CrawlingPartitioner)
-                .step(crawlingSlaveStep())
-                .gridSize(5)
-                .taskExecutor(taskExecutor())
                 .build();
     }
 
@@ -71,51 +56,6 @@ public class CrawlingJobConfiguration {
         taskExecutor.setThreadNamePrefix("uway-crawling-thread-");
 
         return taskExecutor;
-    }
-
-    @Bean
-    public Step crawlingSlaveStep() {
-        return stepBuilderFactory.get("crawlingSlaveStep")
-                .<UniversityDocument, List<DepartmentInfo>>chunk(chunkSize)
-                .reader(itemReader(null, null))
-                .processor(uwayCrawlingProcessor)
-                .writer(itemWriter())
-                .build();
-    }
-
-    @Bean
-    @StepScope
-    public JpaPagingItemReader<UniversityDocument> itemReader(
-            @Value("#{stepExecutionContext['start']}") Long start,
-            @Value("#{stepExecutionContext['end']}") Long end
-    ) {
-        Map<String, Object> parameter = new HashMap<>();
-        parameter.put("start", start);
-        parameter.put("end", end);
-
-        return new JpaPagingItemReaderBuilder<UniversityDocument>()
-                .name("CrawlingItemReader")
-                .entityManagerFactory(entityManagerFactory)
-                .pageSize(chunkSize)
-                .queryString("select u " +
-                        "from university_document u " +
-                        "where university_id >= :start and university_id <= :end ")
-                .parameterValues(parameter)
-                .build();
-    }
-
-    @Bean
-    @StepScope
-    public JpaItemListWriter<DepartmentInfo> itemWriter() {
-        JpaItemWriter<DepartmentInfo> jpaItemWriter = new JpaItemWriter<>();
-        jpaItemWriter.setEntityManagerFactory(entityManagerFactory);
-        jpaItemWriter.setUsePersist(false);
-
-        JpaItemListWriter<DepartmentInfo> writer = new JpaItemListWriter<>(jpaItemWriter, em);
-        writer.setEntityManagerFactory(entityManagerFactory);
-        writer.setUsePersist(false);
-
-        return writer;
     }
 
 }

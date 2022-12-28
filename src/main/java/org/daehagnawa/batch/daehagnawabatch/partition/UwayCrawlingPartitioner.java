@@ -12,13 +12,15 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class CrawlingPartitioner implements Partitioner {
+public class UwayCrawlingPartitioner implements Partitioner {
 
     private final EntityManager em;
 
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
-        Tuple result = em.createQuery("select min(u.universityId), max(u.universityId) from university_document u", Tuple.class).getSingleResult();
+        Tuple result = em.createQuery("select min(u.universityId), max(u.universityId) " +
+                "from university_document u " +
+                "where u.type = 'uway'", Tuple.class).getSingleResult();
 
         int min = ((Long) result.get(0)).intValue();
         int max = ((Long) result.get(1)).intValue();
@@ -27,17 +29,17 @@ public class CrawlingPartitioner implements Partitioner {
         Map<String, ExecutionContext> partition = new HashMap<>();
 
         int number = 0;
-        int start = min;
+        int start = 0;
         int end = targetSize;
 
         for (int i = 0; i < gridSize; i++) {
             ExecutionContext value = new ExecutionContext();
             partition.put("partition" + number, value);
-            value.put("start", (long) start);
-            value.put("end", (long) end);
+            value.put("start", start);  // offset
+            value.put("end", end);  // limit
 
             // 다음 값을 셋팅하기
-            start = end + 1;
+            start = end;
             end = end + targetSize;
             number++;
         }

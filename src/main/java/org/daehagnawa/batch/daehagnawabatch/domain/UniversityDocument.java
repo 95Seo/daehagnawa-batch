@@ -38,11 +38,21 @@ public class UniversityDocument {
     @Column(name = "university_area", columnDefinition = "varchar(2)", nullable = false)
     private String universityArea;
 
+    @Comment("원서 접수 사이트 URL")
+    @Column(name = "reception_url", columnDefinition = "TEXT", nullable = false)
+    private String receptionUrl;
+
+    @Comment("크롤링 타입 구분 (uway, jinhak)")
+    @Column(name = "type", columnDefinition = "VARCHAR(6)", nullable = false)
+    private String type;
+
     public DepartmentInfoProxy toDepartmentProxy() {
         return new DepartmentInfoProxy(
                 universityName,
                 universityArea,
-                universityDegree
+                universityDegree,
+                receptionUrl,
+                type
         );
     }
 

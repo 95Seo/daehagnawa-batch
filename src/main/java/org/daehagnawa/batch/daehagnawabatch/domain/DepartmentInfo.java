@@ -50,16 +50,24 @@ public class DepartmentInfo {
     private float competitionRatio;
 
     @Comment("지역")
-    @Column(name = "area", columnDefinition = "VARCHAR(2)", nullable = false)
-    private String area;
+    @Column(name = "university_area", columnDefinition = "CHAR(2)", nullable = false)
+    private String universityArea;
 
     @Comment("학위")
-    @Column(name = "degree", columnDefinition = "VARCHAR(3)", nullable = false)
-    private String degree;
+    @Column(name = "university_degree", columnDefinition = "CHAR(3)", nullable = false)
+    private String universityDegree;
 
     @Comment("입시년도")
     @Column(name = "entrance_exam_year", columnDefinition = "INT", nullable = false)
     private int entranceExamYear;
+
+    @Comment("원서 접수 사이트 URL")
+    @Column(name = "reception_url", columnDefinition = "TEXT", nullable = false)
+    private String receptionUrl;
+
+    @Comment("크롤링 타입 구분 (uway, jinhak)")
+    @Column(name = "type", columnDefinition = "VARCHAR(6)", nullable = false)
+    private String type;
 
 //    @CreatedDate
 //    @Comment("데이터 생성일")
@@ -80,9 +88,11 @@ public class DepartmentInfo {
             String recruitmentCount,
             String applicantsCount,
             float competitionRatio,
-            String area,
-            String degree,
-            int entranceExamYear
+            String universityArea,
+            String universityDegree,
+            int entranceExamYear,
+            String receptionUrl,
+            String type
 //            LocalDateTime createdAt,
 //            LocalDateTime updatedAt
     ) {
@@ -93,9 +103,12 @@ public class DepartmentInfo {
         this.recruitmentCount = recruitmentCount;
         this.applicantsCount = applicantsCount;
         this.competitionRatio = competitionRatio;
-        this.area = area;
-        this.degree = degree;
+        this.universityArea = universityArea;
+        this.universityDegree = universityDegree;
+        this.receptionUrl = receptionUrl;
         this.entranceExamYear = entranceExamYear;
+        this.receptionUrl = receptionUrl;
+        this.type = type;
 //        this.createdAt = createdAt;
 //        this.updatedAt = updatedAt;
     }
