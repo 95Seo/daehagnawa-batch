@@ -69,16 +69,6 @@ public class DepartmentInfo {
     @Column(name = "type", columnDefinition = "VARCHAR(6)", nullable = false)
     private String type;
 
-//    @CreatedDate
-//    @Comment("데이터 생성일")
-//    @Column(name = "created_at", columnDefinition = "DATETIME", nullable = false)
-//    private LocalDateTime createdAt;
-//
-//    @LastModifiedDate
-//    @Comment("데이터 수정일")
-//    @Column(name = "updated_at", columnDefinition = "DATETIME", nullable = false)
-//    private LocalDateTime updatedAt;
-
     @Builder
     public DepartmentInfo(
             Long id,
@@ -93,8 +83,6 @@ public class DepartmentInfo {
             int entranceExamYear,
             String receptionUrl,
             String type
-//            LocalDateTime createdAt,
-//            LocalDateTime updatedAt
     ) {
         this.id = id;
         this.universityName = universityName;
@@ -109,8 +97,6 @@ public class DepartmentInfo {
         this.entranceExamYear = entranceExamYear;
         this.receptionUrl = receptionUrl;
         this.type = type;
-//        this.createdAt = createdAt;
-//        this.updatedAt = updatedAt;
     }
 
     public void update(
