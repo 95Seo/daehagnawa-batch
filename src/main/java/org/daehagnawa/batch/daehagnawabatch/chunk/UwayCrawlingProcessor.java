@@ -14,27 +14,33 @@ import org.daehagnawa.batch.daehagnawabatch.support.CategoryReg;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Slf4j
+@StepScope
+@Component
 public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, List<DepartmentInfo>> {
 
-    private static List<DepartmentInfo> docs;
+    private List<DepartmentInfo> docs;
 
-    private static DepartmentInfoProxy departmentProxy;
+    private DepartmentInfoProxy departmentProxy;
 
-    private static List<Category> categoryInfos = new LinkedList<>();
+    private List<Category> categoryInfos = new LinkedList<>();
 
-    private static Queue<Category> categoryRemoveQueue = new LinkedList<>();
+    private Queue<Category> categoryRemoveQueue = new LinkedList<>();
 
-    private static Category deptCategory;
+//    private static List<Category> categoryInfos = Collections.synchronizedList(new LinkedList<>());
+//
+//    private static Queue<Category> categoryRemoveQueue = new ConcurrentLinkedDeque<Category>();
 
-    private static int recuitSaveCnt = 0, ratioSaveCnt = 0;
+    private Category deptCategory;
+
+    private int recuitSaveCnt = 0, ratioSaveCnt = 0;
 
     @Override
     public List<DepartmentInfo> process(UniversityDocument item) throws Exception {
@@ -104,7 +110,7 @@ public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, 
     }
 
     // DepartmentTemplate을 받아서 DepartmentTemplate을 다시 return하는 구조 수정해야 함
-    public static void columnPolicyExecute(Elements columns) {
+    public void columnPolicyExecute(Elements columns) {
         int currentPoint = 0;
         int staticCategoryCnt = categoryInfos.size();
         int dynamicCategoryCnt = getSubDeptCount(columns);
@@ -176,7 +182,7 @@ public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, 
     }
 
     // 임시 메서드 - 중복코드
-    private static void downRowCount() {
+    private void downRowCount() {
         for (Category info : categoryInfos) {
             if (!info.rowCountIsZero()) {
                 info.downRowCount();
@@ -202,7 +208,7 @@ public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, 
     }
 
     // 수정 포인트 제발 수정합시다.
-    private static boolean checkCategoryValid(Elements tableCategory) {
+    private boolean checkCategoryValid(Elements tableCategory) {
         // 우리가 수집을 목표로 하는 2가지 타입의 카테고리
         List<String> categoryList = tableCategory.eachText();
         if (
@@ -247,7 +253,7 @@ public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, 
         return false;
     }
 
-    private static int getSubDeptCount(Elements columns) {
+    private int getSubDeptCount(Elements columns) {
         int count = 0;
 
         // html에서 가져온 columns.size + 현재 rowCount가 1이상인 categoryInfo의 갯수
