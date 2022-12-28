@@ -1,21 +1,22 @@
 package org.daehagnawa.batch.daehagnawabatch.domain;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
-@Data
-@Builder
+@Getter @Setter
 @DynamicInsert
+@DynamicUpdate
+@NoArgsConstructor
 @Entity(name = "university_department_info")
+@EqualsAndHashCode(of = {"universityName", "admissionType", "departmentName"})
 public class DepartmentInfo {
 
     @Id
@@ -26,15 +27,15 @@ public class DepartmentInfo {
 
     @Comment("대학 이름")
     @Column(name = "university_name", columnDefinition = "varchar(100)", nullable = false)
-    private String universityName;
+    protected String universityName;
 
     @Comment("입학 전형 구분")
     @Column(name = "admission_type", columnDefinition = "varchar(100)", nullable = false)
-    private String admissionType;
+    protected String admissionType;
 
     @Comment("학과 이름")
-    @Column(name = "department_name", columnDefinition = "TEXT", nullable = false)
-    private String departmentName;
+    @Column(name = "department_name", columnDefinition = "varchar(500)", nullable = false)
+    protected String departmentName;
 
     @Comment("모집 인원")
     @Column(name = "recruitment_count", columnDefinition = "TEXT", nullable = false)
@@ -60,18 +61,17 @@ public class DepartmentInfo {
     @Column(name = "entrance_exam_year", columnDefinition = "INT", nullable = false)
     private int entranceExamYear;
 
-    @CreatedDate
-    @Comment("데이터 생성일")
-    @Column(name = "created_at", columnDefinition = "DATETIME")
-    private LocalDateTime createdAt;
+//    @CreatedDate
+//    @Comment("데이터 생성일")
+//    @Column(name = "created_at", columnDefinition = "DATETIME", nullable = false)
+//    private LocalDateTime createdAt;
+//
+//    @LastModifiedDate
+//    @Comment("데이터 수정일")
+//    @Column(name = "updated_at", columnDefinition = "DATETIME", nullable = false)
+//    private LocalDateTime updatedAt;
 
-    @LastModifiedDate
-    @Comment("데이터 수정일")
-    @Column(name = "updated_at", columnDefinition = "DATETIME")
-    private LocalDateTime updatedAt;
-
-    protected DepartmentInfo() {}
-
+    @Builder
     public DepartmentInfo(
             Long id,
             String universityName,
@@ -82,9 +82,9 @@ public class DepartmentInfo {
             float competitionRatio,
             String area,
             String degree,
-            int entranceExamYear,
-            LocalDateTime createdAt,
-            LocalDateTime updatedAt
+            int entranceExamYear
+//            LocalDateTime createdAt,
+//            LocalDateTime updatedAt
     ) {
         this.id = id;
         this.universityName = universityName;
@@ -96,7 +96,23 @@ public class DepartmentInfo {
         this.area = area;
         this.degree = degree;
         this.entranceExamYear = entranceExamYear;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+//        this.createdAt = createdAt;
+//        this.updatedAt = updatedAt;
+    }
+
+    public void update(
+            String recruitmentCount,
+            String applicantsCount,
+            float competitionRatio
+    ) {
+        if (!this.recruitmentCount.equals(recruitmentCount)) {
+            this.recruitmentCount = recruitmentCount;
+        }
+        if (!this.applicantsCount.equals(applicantsCount)) {
+            this.applicantsCount = applicantsCount;
+        }
+        if (this.competitionRatio != competitionRatio) {
+            this.competitionRatio = competitionRatio;
+        }
     }
 }

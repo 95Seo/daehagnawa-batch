@@ -42,24 +42,6 @@ public class CrawlingPartitioner implements Partitioner {
             number++;
         }
 
-
-//        int end = start + targetSize - 1;
-
-//        while (start <= max) {
-//            ExecutionContext value = new ExecutionContext();
-//            result.put("partition" + number, value);
-//            value.put("product", list.get(number));
-//
-//            if (end >= max) {
-//                end = max;
-//            }
-//            value.putInt("minValue", start);
-//            value.putInt("maxValue", end);
-//            start += targetSize;
-//            end += targetSize;
-//            number++;
-//        }
-
         return partition;
     }
 }

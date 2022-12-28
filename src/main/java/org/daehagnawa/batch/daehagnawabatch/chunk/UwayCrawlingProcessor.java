@@ -34,10 +34,6 @@ public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, 
 
     private Queue<Category> categoryRemoveQueue = new LinkedList<>();
 
-//    private static List<Category> categoryInfos = Collections.synchronizedList(new LinkedList<>());
-//
-//    private static Queue<Category> categoryRemoveQueue = new ConcurrentLinkedDeque<Category>();
-
     private Category deptCategory;
 
     private int recuitSaveCnt = 0, ratioSaveCnt = 0;
@@ -242,7 +238,7 @@ public class UwayCrawlingProcessor implements ItemProcessor<UniversityDocument, 
                             categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG2.getReg())) &&
                             categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG3.getReg()))
             ) {
-                log.info("경쟁률 생성!!");
+//                log.info("경쟁률 생성!!");
                 Category ratio = CategoryFactory.createRatio(Integer.MAX_VALUE);
                 categoryInfos.add(ratio);
             }

@@ -1,26 +1,61 @@
 package org.daehagnawa.batch.daehagnawabatch.chunk;
 
 import lombok.RequiredArgsConstructor;
+import org.daehagnawa.batch.daehagnawabatch.domain.DepartmentInfo;
 import org.springframework.batch.item.database.JpaItemWriter;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
+import java.util.*;
 
-// jojoldu 참고
+@Transactional
 @RequiredArgsConstructor
-public class JpaItemListWriter<T> extends JpaItemWriter<List<T>> {
-    private final JpaItemWriter<T> jpaItemWriter;
+public class JpaItemListWriter<T> extends JpaItemWriter<List<DepartmentInfo>> {
+
+    private final JpaItemWriter<DepartmentInfo> jpaItemWriter;
+    private final EntityManager em;
 
     @Override
-    public void write(List<? extends List<T>> items) {
+    public void write(List<? extends List<DepartmentInfo>> items) {
 
-        List<T> itemList = new ArrayList<>();
+        String universityName = items.get(0).get(0).getUniversityName();
 
-        for (List<T> item : items) {
-            itemList.addAll(item);
-            System.out.println(item);
+        TypedQuery<DepartmentInfo> query = em.createQuery("select i " +
+                "from university_department_info i " +
+                "where i.universityName = :universityName ", DepartmentInfo.class);
+
+        List<DepartmentInfo> departmentInfos = query
+                .setParameter("universityName", universityName)
+                .getResultList();
+
+        for (List<DepartmentInfo> item : items) {
+            if (departmentInfos.isEmpty()) {
+                save(item);
+            } else {
+                update(item, departmentInfos);
+            }
         }
+    }
 
+    private void save(List<DepartmentInfo> item) {
+        List<DepartmentInfo> itemList = new ArrayList<>();
+        itemList.addAll(item);
         jpaItemWriter.write(itemList);
+    }
+
+    private void update(List<DepartmentInfo> item, List<DepartmentInfo> departmentInfos) {
+        for (DepartmentInfo i : item) {
+            for (DepartmentInfo departmentInfo : departmentInfos) {
+                if (departmentInfo.equals(i)) {
+                    departmentInfo.update(
+                            i.getRecruitmentCount(),
+                            i.getApplicantsCount(),
+                            i.getCompetitionRatio()
+                    );
+                }
+            }
+        }
+        em.flush();
     }
 }
