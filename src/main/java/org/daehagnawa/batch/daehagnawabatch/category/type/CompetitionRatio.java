@@ -45,6 +45,9 @@ public class CompetitionRatio extends Category {
     }
 
     private Float toFloat(String columnData) {
+        if (columnData.equals("nan"))
+            columnData = "-1";
+
         return Float.valueOf(columnData);
     }
 }

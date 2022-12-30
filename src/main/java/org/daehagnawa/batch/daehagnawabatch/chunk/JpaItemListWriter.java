@@ -18,23 +18,26 @@ public class JpaItemListWriter<T> extends JpaItemWriter<List<DepartmentInfo>> {
 
     @Override
     public void write(List<? extends List<DepartmentInfo>> items) {
+        if (!items.isEmpty()) {
+            String universityName = items.get(0).get(0).getUniversityName();
 
-        String universityName = items.get(0).get(0).getUniversityName();
+            TypedQuery<DepartmentInfo> query = em.createQuery("select i " +
+                    "from university_department_info i " +
+                    "where i.universityName = :universityName ", DepartmentInfo.class);
 
-        TypedQuery<DepartmentInfo> query = em.createQuery("select i " +
-                "from university_department_info i " +
-                "where i.universityName = :universityName ", DepartmentInfo.class);
+            List<DepartmentInfo> departmentInfos = query
+                    .setParameter("universityName", universityName)
+                    .getResultList();
 
-        List<DepartmentInfo> departmentInfos = query
-                .setParameter("universityName", universityName)
-                .getResultList();
-
-        for (List<DepartmentInfo> item : items) {
-            if (departmentInfos.isEmpty()) {
-                save(item);
-            } else {
-                update(item, departmentInfos);
+            for (List<DepartmentInfo> item : items) {
+                if (departmentInfos.isEmpty()) {
+                    save(item);
+                } else {
+                    update(item, departmentInfos);
+                }
             }
+        } else {
+            System.out.println("없다 이눔아");
         }
     }
 

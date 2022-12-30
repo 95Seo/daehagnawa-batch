@@ -42,7 +42,7 @@ public class CrawlingJobConfiguration {
     public Job job() {
         return jobBuilderFactory.get("crawlingJob")
                 .start(uwayCrawlingMasterStep)
-                .next(jinhakCrawlingMasterStep)
+//                .next(jinhakCrawlingMasterStep)
                 .incrementer(new RunIdIncrementer())
                 .listener(new StopWatchJobListener())
                 .build();
