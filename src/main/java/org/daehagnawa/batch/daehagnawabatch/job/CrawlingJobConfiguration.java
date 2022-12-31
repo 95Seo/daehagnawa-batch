@@ -41,9 +41,9 @@ public class CrawlingJobConfiguration {
     @Bean
     public Job job() {
         return jobBuilderFactory.get("crawlingJob")
-                .start(uwayCrawlingMasterStep)
-//                .next(jinhakCrawlingMasterStep)
                 .incrementer(new RunIdIncrementer())
+                .start(uwayCrawlingMasterStep)
+                .next(jinhakCrawlingMasterStep)
                 .listener(new StopWatchJobListener())
                 .build();
     }
@@ -53,7 +53,7 @@ public class CrawlingJobConfiguration {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(5);
         taskExecutor.setMaxPoolSize(20);
-        taskExecutor.setThreadNamePrefix("uway-crawling-thread-");
+        taskExecutor.setThreadNamePrefix("crawling-thread-");
 
         return taskExecutor;
     }

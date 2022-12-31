@@ -54,22 +54,8 @@ public class JinhakCrawlingStepConfiguration {
         return stepBuilderFactory.get("jinhakCrawlingSlaveStep")
                 .<UniversityDocument, List<DepartmentInfo>>chunk(chunkSize)
                 .reader(jinhakItemReader(null, null))
-                .processor(new ItemProcessor<UniversityDocument, List<DepartmentInfo>>() {
-                    @Override
-                    public List<DepartmentInfo> process(UniversityDocument item) throws Exception {
-                        System.out.println(item.getUniversityId());
-                        System.out.println(item.getUniversityName());
-                        System.out.println(item.getUniversityArea());
-                        System.out.println(item.getUniversityDegree());
-                        return List.of(new DepartmentInfo());
-                    }
-                })
-                .writer(new ItemWriter<List<DepartmentInfo>>() {
-                    @Override
-                    public void write(List<? extends List<DepartmentInfo>> items) throws Exception {
-
-                    }
-                })
+                .processor(jinhakCrawlingProcessor)
+                .writer(itemListWriter)
                 .build();
     }
 

@@ -17,45 +17,20 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.io.IOException;
+import java.util.*;
 
 @Slf4j
 @StepScope
 @Component
 public class JinhakCrawlingProcessor implements ItemProcessor<UniversityDocument, List<DepartmentInfo>> {
 
-    private List<DepartmentInfo> docs;
-
-    private DepartmentInfoProxy departmentProxy;
-
-    private List<Category> categoryInfos = new LinkedList<>();
-
-    private Queue<Category> categoryRemoveQueue = new LinkedList<>();
-
-    private Category deptCategory;
-
-    private int recuitSaveCnt = 0, ratioSaveCnt = 0;
-
     @Override
     public List<DepartmentInfo> process(UniversityDocument item) throws Exception {
+
         log.info("크롤링을 시작합니다.");
 
-        // init
-        docs = new ArrayList<>();
-        departmentProxy = item.toDepartmentProxy();
-        departmentProxy.setEntranceExamYear(2023);
-
-        log.info("{}", item.getUniversityName());
-
-        Document document = item.getDocument();
-
-        // 경쟁률을 보여주는 테이블(div.DivType)을 Element로 복수개인 Elements를 만들어서 가져온다.
-        Elements tables = document.select("form div.DivType");
-
-        tableParsing(tables);
+        List<DepartmentInfo> docs = parseToDepartment(item);
 
         log.info("docs.size : {}", docs.size());
 
@@ -64,204 +39,129 @@ public class JinhakCrawlingProcessor implements ItemProcessor<UniversityDocument
         return docs;
     }
 
-    // 정원내 일반고(학생부) 경쟁률 현황 => 이거(입학 유형, AdmissionsType) 추출 후 다음 for 문
-    private void tableParsing(Elements tables) {
-        // tableElements 안에 있는 table 들을 하나 씩 꺼내옴
-        for (Element table : tables) {
-            Elements tableCategory = table.select("thead tr th");
 
-            String admissionType = table.select("div h3").text().replace("경쟁률 현황", "");
+    private List<DepartmentInfo> parseToDepartment(
+            UniversityDocument item
+    ) throws IOException {
 
-            if (!checkCategoryValid(tableCategory)) {
-//                log.info("{}", admissionType + " 수집 X");
-                continue;
-            }
+        String universityName = item.getUniversityName();
 
-//            log.info("{}", admissionType + " 수집 O");
+        log.info("universityName : {}", universityName);
 
-            // 테이블의 row를 나누고 rows 로 만들어 가져옴
-            Elements rows = table.getElementsByClass("trFieldValue");
+        Document document = item.getDocument();
 
-            departmentProxy.setAdmissionType(admissionType);
+        List<DepartmentInfo> departments = new ArrayList<>();
 
-            rowParsing(rows);
+        // table 구하기
+        Elements tables = getTables(document);
+        Elements admissionTypes = getAdmissionTypes(tables);
 
-            resourceDeallocate();
-        }
-    }
+        DepartmentInfoProxy proxy = item.toDepartmentProxy();
 
-    // 넘겨 받은 표를 학과별로 한 줄씩 나눈다.
-    private void rowParsing(Elements rows) {
+        for (int i = 0; i < admissionTypes.size(); i++) {
 
-        // rows의 각 row를 꺼내와서 하나 씩 반복
-        for (Element row : rows) {
-            // 한줄의 row를 column 으로 나눔
-            Elements columns = row.getElementsByClass("txtFieldValue");
+            proxy.setAdmissionType(admissionTypes.get(i).text());
 
-            columnPolicyExecute(columns);
+            Element targetTable = tables.get(i).child(1);
+            int tableSize = targetTable.select("tbody tr").size();
 
-            if ((recuitSaveCnt == 0) && (ratioSaveCnt == 0)) {
-                docs.add(departmentProxy.toEntity());
-            }
-        }
-    }
+            String[] tableColumn = targetTable.child(0).text().split(" ");
+            HashMap<String, Integer> columnIndex = getColumnIndex(tableColumn);
 
-    // DepartmentTemplate을 받아서 DepartmentTemplate을 다시 return하는 구조 수정해야 함
-    public void columnPolicyExecute(Elements columns) {
-        int currentPoint = 0;
-        int staticCategoryCnt = categoryInfos.size();
-        int dynamicCategoryCnt = getSubDeptCount(columns);
-        int subDeptCnt;
+            log.info("proxy admission : {}", admissionTypes.get(i).text());
 
-        // if (columns.size() != 0) 이 부분도 수정 해 봅시다.
-        if (columns.size() != 0) {
+            for (int j = 1; j < tableSize - 1; j++) {
+                Elements tds = targetTable.child(j).children();
 
-            // 사이즈가 크면 dept 뒤에 subDept 이어 붙이기
-            if ((subDeptCnt = dynamicCategoryCnt - staticCategoryCnt) > 0) {
-//                log.info("===========================모집단위 나눠짐===========================");
-                int deptSeq = deptCategory.getCategorySeq();
-                for (int i = 1; i <= subDeptCnt; i++) {
-                    int subDeptSeq = deptSeq + i;
-                    categoryInfos.add(subDeptSeq, CategoryFactory.create("서브모집단위", subDeptSeq));
-                }
-            }
+                log.info("j : {}, tableSize : {}", j, tableSize);
 
-            // recuitSaveCnt != 0 && ratioSaveCnt != 0 이면 true
-            // toLinked가 true면 문자열 연결하세요.
-            boolean toLinked = (recuitSaveCnt != 0) || (ratioSaveCnt != 0);
-
-            for (Category info : categoryInfos) {
-//                log.info("-------------------------");
-
-                // rowCount 확인
-                // rowCount가 0이면 column 값을 가져와서 CategoryInfo 객체에 셋팅
-                if (info.rowCountIsZero()) {
-                    Element column = columns.get(currentPoint);
-                    info.setColumn(column);
-                    currentPoint++;
+                if (tds.size() <= 0) {
+                    continue;
                 }
 
-                info.downRowCount();
+                log.info("column size : {} ", columnIndex.size());
 
-                if (info.isTarget()) {
-                    info.setDepartmentProxyData(departmentProxy, toLinked);
-//                    log.info("{} : {} ", info.getCategoryName(), info.getColumnData());
-                }
+                for (String column : columnIndex.keySet()) {
+                    int index = tds.size() - columnIndex.get(column) - 1 < 0 ? 0 : tds.size() - columnIndex.get(column) - 1;
 
-                // instanceof 보다 메서드 호출이 더 빠르다는데...
-                // instanceof -> 메서드 호출로 바꿔보자
-                if (info instanceof RecruitmentCount) {
-                    recuitSaveCnt = info.getRowCount();
-                }
+                    log.info("tds : \n{}", tds);
 
-                if (info instanceof CompetitionRatio) {
-                    if (!info.getColumnData().equals("-1")) {
-                        ratioSaveCnt = info.getRowCount();
+                    if (column.equals("모집단위")) {
+
+                        String departmentName = tds.get(index).text().trim();
+                        log.info("모집단위 index : {}", index);
+                        proxy.setDepartmentName(departmentName);
+                    }
+
+                    if (column.equals("모집인원")) {
+                        String recruitmentCount = tds.get(index).text().trim();
+                        log.info("모집인원 index : {}", index);
+                        proxy.setRecruitmentCount(recruitmentCount);
+                    }
+
+                    if (column.equals("지원인원")) {
+                        String applicantsCount = tds.get(index).text().trim();
+                        log.info("지원인원 index : {}", index);
+                        proxy.setApplicantsCount(applicantsCount);
+                    }
+
+                    if (column.equals("경쟁률")) {
+                        String competitionRatio = tds.get(index).text().trim();
+                        log.info("경쟁률 index : {}", index);
+                        proxy.setCompetitionRatio(Float.parseFloat(competitionRatio.split(":")[0].trim()));
                     }
                 }
 
-                if (info instanceof SubDepartment) {
-                    if (info.rowCountIsZero())
-                        categoryRemoveQueue.add(info);
-                }
-            }
-
-            // subDept 없애기
-            for (Category removeTarget : categoryRemoveQueue) {
-                categoryInfos.remove(removeTarget);
-                // 할당 해제
-                removeTarget = null;
-            }
-        } else {
-            // 임시 방편
-            downRowCount();
-        }
-    }
-
-    // 임시 메서드 - 중복코드
-    private void downRowCount() {
-        for (Category info : categoryInfos) {
-            if (!info.rowCountIsZero()) {
-                info.downRowCount();
-
-                if (info instanceof RecruitmentCount) {
-                    recuitSaveCnt = info.getRowCount();
-                }
-
-                if (info instanceof CompetitionRatio) {
-                    if (!info.getColumnData().equals("-1")) {
-//                    log.info("ratioRowCount2 = {}", info.getRowCount());
-                        ratioSaveCnt = info.getRowCount();
-                    }
-                }
-
-                // instanceof -> 메서드 호출로 바꾸기
-                if (info instanceof SubDepartment) {
-                    if (info.rowCountIsZero())
-                        categoryRemoveQueue.add(info);
-                }
+                departments.add(proxy.toEntity());
             }
         }
+
+        return departments;
     }
 
-    // 수정 포인트 제발 수정합시다.
-    private boolean checkCategoryValid(Elements tableCategory) {
-        // 우리가 수집을 목표로 하는 2가지 타입의 카테고리
-        List<String> categoryList = tableCategory.eachText();
-        if (
-                (categoryList.stream().anyMatch(s -> s.matches(CategoryReg.DEPARTMENT_REG1.getReg())) ||
-                                categoryList.stream().anyMatch(s -> s.matches(CategoryReg.DEPARTMENT_REG2.getReg()))
-                ) && categoryList.stream().anyMatch(s -> s.matches(CategoryReg.RECURITMENT_COUNT_REG.getReg())) &&
-                        (categoryList.stream().anyMatch(s -> s.matches(CategoryReg.APPLICANTS_COUNT_REG1.getReg())) ||
-                                        categoryList.stream().anyMatch(s -> s.matches(CategoryReg.APPLICANTS_COUNT_REG2.getReg()))
-                        )
-        ) {
-            for (int i = 0; i < categoryList.size(); i++) {
-
-                String category = categoryList.get(i);
-
-                categoryInfos.add(CategoryFactory.create(category, i));
-
-                // 모집인원 카테고리는 나뉘어지는 기준점이 된다.
-                // 따로 빼서 바로 접근 할 수 있도록 하자.
-                if (
-                        category.matches(CategoryReg.DEPARTMENT_REG1.getReg()) ||
-                                category.matches(CategoryReg.DEPARTMENT_REG2.getReg())
-                )
-                    deptCategory = categoryInfos.get(i);
+    private HashMap<String, Integer> getColumnIndex(String[] tableColumn) {
+        HashMap<String, Integer> columnIndex = new HashMap<>();
+        for (int i = 0; i < tableColumn.length; i++) {
+            if (tableColumn[i].contains("모집단위")) {
+                columnIndex.put("모집단위", tableColumn.length - i - 1);
+                log.info("모집단위 index : {}", tableColumn.length - i - 1);
             }
 
-            // 모집단위, 모집인원, 지원인원은 존재하는데,
-            // 경쟁률만 없는 경우 경쟁률을 -1로 설정 해서 DB에 저장
-            // 회원들 한테 보여줄 때 경쟁률 -1 이면 - 로 보여줌
-            if (
-                    categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG1.getReg())) &&
-                            categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG2.getReg())) &&
-                            categoryList.stream().noneMatch(s -> s.matches(CategoryReg.COMPETITION_RATIO_REG3.getReg()))
-            ) {
-//                log.info("경쟁률 생성!!");
-                Category ratio = CategoryFactory.createRatio(Integer.MAX_VALUE);
-                categoryInfos.add(ratio);
+            if (tableColumn[i].contains("모집인원")) {
+                columnIndex.put("모집인원", tableColumn.length - i - 1);
+                log.info("모집인원 index : {}", tableColumn.length - i - 1);
             }
 
-            return true;
-        }
+            if (tableColumn[i].contains("지원인원")) {
+                columnIndex.put("지원인원", tableColumn.length - i - 1);
+                log.info("지원인원 index : {}", tableColumn.length - i - 1);
+            }
 
-        return false;
+            if (tableColumn[i].contains("경쟁률")) {
+                columnIndex.put("경쟁률", tableColumn.length - i - 1);
+                log.info("경쟁률 index : {}", tableColumn.length - i - 1);
+            }
+        }
+        return columnIndex;
     }
 
-    private int getSubDeptCount(Elements columns) {
-        int count = 0;
-
-        // html에서 가져온 columns.size + 현재 rowCount가 1이상인 categoryInfo의 갯수
-        for (Category info : categoryInfos) {
-            if (!info.rowCountIsZero())
-                count += 1;
-        }
-        return columns.size() + count;
+    private String[] getTableColumn(Elements tables) {
+        return tables
+                .select("tbody tr")
+                .first()
+                .children()
+                .text()
+                .split(" ");
     }
 
-    private void resourceDeallocate() {
-        categoryInfos.clear();
+    private Elements getAdmissionTypes(Elements tables) {
+        return tables
+                .prev()
+                .select("strong");
+    }
+
+    private Elements getTables(Document document) {
+        return document
+                .select("table.tableRatio3");
     }
 }
