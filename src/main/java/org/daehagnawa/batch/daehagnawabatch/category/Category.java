@@ -21,7 +21,15 @@ public abstract class Category {
 
     public void setColumn(Element column) {
         columnData = column.text();
-        rowCount = toInteger(column.attr("rowspan"));
+        String rowspan = column.attr("rowspan");
+
+        if (rowspan.isEmpty())
+            rowCount = 1;
+            // 아이고.. 이건 어쩔 수 가 없다.
+        else if (rowspan.equals("22class=\"rate4\""))
+            rowCount = 22;
+        else
+            rowCount = toInteger(rowspan);
     }
 
     private static Integer toInteger(String str) {

@@ -48,6 +48,9 @@ public class CompetitionRatio extends Category {
         if (columnData.equals("nan"))
             columnData = "-1";
 
+        if (columnData.length() >= 5)
+            columnData = "-1";
+
         return Float.valueOf(columnData);
     }
 }

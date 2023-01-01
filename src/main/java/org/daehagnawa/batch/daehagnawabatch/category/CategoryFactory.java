@@ -11,11 +11,15 @@ public class CategoryFactory {
         // 신안산대학교 - 모집단위 -> 모집학과
         if (
                 categoryName.matches(CategoryReg.DEPARTMENT_REG1.getReg()) ||
-                        categoryName.matches(CategoryReg.DEPARTMENT_REG2.getReg())
+                categoryName.matches(CategoryReg.DEPARTMENT_REG2.getReg()) ||
+                categoryName.matches(CategoryReg.DEPARTMENT_REG3.getReg())
         )
             return createDepartment(categorySeq);
 
-        if (categoryName.matches(CategoryReg.SUB_DEPARTMENT_REG.getReg()))
+        if (
+                categoryName.matches(CategoryReg.SUB_DEPARTMENT_REG1.getReg()) ||
+                categoryName.matches(CategoryReg.SUB_DEPARTMENT_REG2.getReg())
+        )
             return createSubDepartment(categorySeq);
 
         if (categoryName.matches(CategoryReg.EVENT_REG.getReg()))
@@ -29,14 +33,14 @@ public class CategoryFactory {
 
         if (
                 categoryName.matches(CategoryReg.APPLICANTS_COUNT_REG1.getReg()) ||
-                        categoryName.matches(CategoryReg.APPLICANTS_COUNT_REG2.getReg())
+                categoryName.matches(CategoryReg.APPLICANTS_COUNT_REG2.getReg())
         )
             return createApplicantsCount(categorySeq);
 
         if (
                 categoryName.matches(CategoryReg.COMPETITION_RATIO_REG1.getReg()) ||
-                        categoryName.matches(CategoryReg.COMPETITION_RATIO_REG2.getReg()) ||
-                        categoryName.matches(CategoryReg.COMPETITION_RATIO_REG3.getReg())
+                categoryName.matches(CategoryReg.COMPETITION_RATIO_REG2.getReg()) ||
+                categoryName.matches(CategoryReg.COMPETITION_RATIO_REG3.getReg())
         )
             return createCompetitionRatio(categorySeq);
 

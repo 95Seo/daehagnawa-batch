@@ -6,9 +6,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum CategoryReg {
-    DEPARTMENT_REG1("^[모집단위\\s]*$"),
+    DEPARTMENT_REG1("모집단위.*"),
     DEPARTMENT_REG2("^[모집학과\\s]*$"),
-    SUB_DEPARTMENT_REG("^[서브모집단위\\s]*$"),
+    DEPARTMENT_REG3(".*학부.*"),
+    SUB_DEPARTMENT_REG1("^[서브모집단위\\s]*$"),
+    SUB_DEPARTMENT_REG2("^[전공\\s]*$"),
     EVENT_REG("^[종목\\s]*$"),
     GENDER_REG("^[성별\\s]*$"),
     // 모집인원이 "40이내" 라고 되어 있으면 -> -40으로 변경
