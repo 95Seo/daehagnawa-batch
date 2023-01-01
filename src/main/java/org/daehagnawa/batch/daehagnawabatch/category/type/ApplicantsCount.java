@@ -12,10 +12,12 @@ public class ApplicantsCount extends Category {
 
     @Override
     public void setDepartmentProxyData(DepartmentInfoProxy template, boolean toLinked) {
-        if (toLinked)
+        if (toLinked && maxRowCount == 1) {
             template.linkedApplicantsCount(columnData);
-        else
+        }
+        else {
             template.setApplicantsCount(columnData);
+        }
     }
 
     @Override

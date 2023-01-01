@@ -9,6 +9,7 @@ public abstract class Category {
     protected String categoryName;
     protected int categorySeq;
     protected int rowCount = 0;
+    protected int maxRowCount = 0;
     protected String columnData;
 
     protected Category(
@@ -23,13 +24,17 @@ public abstract class Category {
         columnData = column.text();
         String rowspan = column.attr("rowspan");
 
-        if (rowspan.isEmpty())
+        if (rowspan.isEmpty()) {
             rowCount = 1;
+        }
             // 아이고.. 이건 어쩔 수 가 없다.
-        else if (rowspan.equals("22class=\"rate4\""))
+        else if (rowspan.equals("22class=\"rate4\"")) {
             rowCount = 22;
-        else
+        }
+        else {
             rowCount = toInteger(rowspan);
+        }
+        maxRowCount = rowCount;
     }
 
     private static Integer toInteger(String str) {
